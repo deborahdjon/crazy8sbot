@@ -511,9 +511,6 @@ def new_player(update: Update, context: CallbackContext) -> int:
             - if new_player != bot: check len(context.chat_data['players']) increased by 1
     """
 
-
-
-
     lg.debug("Somebody entered the group")
     want2play = {x.id for x in update.message.new_chat_members}
     lg.info(f"new member(s): {str(want2play)}")
@@ -1026,11 +1023,7 @@ navigation = ConversationHandler(states[conversation_states["entry_point"]],
 
 
 
-updater = None 
 
-def restart_polling():
-    updater.dispatcher.stop_polling()  # Stop polling
-    updater.dispatcher.start_polling()  # Restart polling
 
 def main():
     """main function

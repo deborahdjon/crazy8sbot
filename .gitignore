@@ -12,5 +12,6 @@ src/message.json
 src/protokoll*
 protokoll*
 .gitignore
+craz8env/
 
 
