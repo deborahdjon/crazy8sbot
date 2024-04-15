@@ -1,0 +1,49 @@
+"Crazy Eights" is a popular card game that is easy to learn and fun for players of all ages. The primary goal of the game is to be the first to get rid of all your cards. Here’s how you can play it:
+
+### Number of Players
+- Typically 2 to 4 players.
+
+### The Deck
+- A standard 52-card deck is used. For more than 5 players, two decks might be combined.
+
+### Game Setup
+1. **Deal Cards**: Each player is dealt 8 cards.
+2. **The Draw Pile**: The remaining cards form the draw pile, placed face down.
+3. **Discard Pile**: Turn the top card of the draw pile to start the discard pile.
+
+### Game Rules
+- Players take turns in a clockwise order.
+- On your turn, play a card from your hand that matches the rank or suit of the top card on the discard pile.
+  - For example, if the discard pile has a 6 of hearts, you can play any heart or any 6.
+- If you cannot match the rank or suit, you must draw cards from the pile until you get a playable card.
+- If the draw pile runs out, shuffle the discard pile (except the top card) to make a new draw pile.
+
+### Special Cards
+- **Eights**: Any eight can be played regardless of the suit or rank of the discard pile, and the player declares which suit is to continue.
+- **Other Variants**: Depending on house rules, other cards can have special effects:
+  - Twos might force the next player to draw two cards.
+  - Aces might skip the next player's turn.
+  - Queens might reverse the order of play.
+
+### Winning the Game
+- The first player to discard all their cards wins a round
+- In "Crazy Eights," scoring is typically optional, but it adds an additional competitive element to the game, especially if players are engaged in multiple rounds. Here's how the scoring generally works:
+
+## Scoring at the End of a Round
+When a player discards all of their cards and wins the round, the other players tally points based on the cards remaining in their hands. Points are assigned as follows:
+
+- **Number cards (2-10)**: Worth their face value (e.g., a 7 is worth 7 points).
+- **Face cards (Jack, Queen, King)**: Each worth 10 points.
+- **Aces**: Usually worth 1 point.
+- **Eights**: Typically worth 50 points, due to their special status in the game.
+
+### Calculating the Score
+1. **Collecting Points**: Each player counts up the points of the cards left in their hand and gives that number of points to the winner of the round.
+2. **Continuing Play**: The game can continue for a predetermined number of rounds or until a player reaches a set score, like 100 or 200 points. 
+
+### Example
+If Player A wins the round, and Player B has a King, a 5, and an Eight in hand, Player B would owe Player A 75 points (10 for the King, 5 for the 5, and 50 for the Eight).
+
+### Game End
+The game can end after a set number of rounds or when a player reaches a target score. Often, the player with the lowest score (having given away the fewest points) is the overall winner if you're playing multiple rounds.
+This scoring system encourages players to finish their hands quickly and strategically use their cards to avoid high-point cards lingering in their hand at the end of the round.

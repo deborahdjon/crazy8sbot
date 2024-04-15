@@ -857,6 +857,10 @@ def unknown_command(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
 
 
+def handle_natural_questions(update: Update, context: CallbackContext):
+    pass
+
+
 # -- End: Message handler callback functions --#
 
 
