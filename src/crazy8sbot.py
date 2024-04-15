@@ -4,11 +4,12 @@ Bot for playing crazy eights in Telegram chat.
         Author: Deborah Djon
         Date: 06.06.2021
         Version:0.1
-        license: free
+        license: MIT
 """
+
 from telegram.error import TimedOut
-from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
-from telegram import Update, ReplyKeyboardMarkup, User, ReplyKeyboardRemove
+from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext, Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+from telegram import Update, ReplyKeyboardMarkup, User, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from tabulate import tabulate
 from time import sleep
 import logging as lg
@@ -165,14 +166,15 @@ def leave_chat(update: Update, context: CallbackContext):
     bot.send_message(chat_id=update.effective_chat.id,
                      text="See you next time!👋",
                      reply_markup=ReplyKeyboardRemove(remove_keyboard = True, selective = False))
-    end_game(update, context)
     bot.leaveChat(update.effective_chat.id)
+    return conversation_states["entry_point"]
+     
 
 
-def end_game(update: Update, context: CallbackContext):
+def end_game(update: Update, context: CallbackContext, bot_leave_chat=True):
     """ends the game for a certain chat
         ends the game and deletes all related data for the respective chat
-        method is only used directly by the bot when teh game is over
+        method is only used directly by the bot when the game is over
         param:
             update (telegram.Update): represents incoming update - Accordingly in all following functions
             context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
@@ -182,12 +184,17 @@ def end_game(update: Update, context: CallbackContext):
             - bot side: check that bot cannot send messages to the chat
             - bot side: check that bot cannot receive messages from the chat
     """
-    context.chat_data['players'] = {}
+    context.chat_data['players'] = set()
     context.chat_data['game'] = 0
     context.chat_data['turn'] = 0
-    leave_chat(update, context)
 
-
+    
+    if(bot_leave_chat):
+        return leave_chat(update, context)
+    else: 
+        restart_polling()
+        pass #return conversation_states["entry_point"]
+    
 def user_end_game(update: Update, context: CallbackContext):
     """end the game from user side
         can be used by user to end the game explicitly
@@ -212,6 +219,7 @@ def user_end_game(update: Update, context: CallbackContext):
                                      text="I'm sorry, you must be admin to end the game 😟")
     except TimedOut:
         leave_chat(update, context)
+        
 
 def hand_out_hands(update: Update, context: CallbackContext) -> bool:
     """sends hands keyboards to players
@@ -373,7 +381,6 @@ def handle_timeout(update:Update, context:CallbackContext):
 
 # -- End: Helper functions -- #
 
-
 # -- Message handler callback functions --#
 def tell_turn(update: Update, context: CallbackContext):
     """notify who's turn it is
@@ -392,6 +399,9 @@ def tell_turn(update: Update, context: CallbackContext):
     player_at_turn = get_username_from_id(update, context, players[at_turn])
     game = context.chat_data['game']
     hand_keyboard = make_hand_keyboard(game, players[at_turn], True)
+
+
+
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="It's your turn @" + player_at_turn,
                              reply_markup=hand_keyboard)
@@ -400,7 +410,7 @@ def tell_turn(update: Update, context: CallbackContext):
 def new_game(update: Update, context: CallbackContext) -> int:
     """initiates new game
         function that initiates new game
-        triggered when bot is added to a group chat, the roup can be new or existing
+        triggered when bot is added to a group chat, the goup can be new or existing
         registers the person that created the chat or added the bot as player
         param:
             update (telegram.Update): represents incoming update - Accordingly in all following functions
@@ -410,16 +420,26 @@ def new_game(update: Update, context: CallbackContext) -> int:
             - context.chat_data['players'] exists
             - context.chat_data['game'] exists
     """
-    if update.message.group_chat_created:
+    bot_added_to_group = True
+    for member in update.message.new_chat_members:
+        if member.username != "@crazy8sbot": 
+            bot_added_to_group = False
+    if update.message.group_chat_created or bot_added_to_group:
         lg.debug("Group was created")
     sender = update.message.from_user.id
     lg.info(f"{get_users_name_from_id(update, context, sender)} created the chat {update.message.chat.title}")
-    context.chat_data['players'] = {sender}
+    context.chat_data['players'] = set()
+    context.chat_data['players'].add(sender)
     context.chat_data['turn'] = 0
     context.chat_data['game'] = 0
     lg.info(f"Players initialized with {str(context.chat_data['players'])} "
             f"({get_users_name_from_id(update, context, sender)})")
     name = get_users_name_from_id(update, context, sender)
+    if name == "crazy8sbot":
+       # end_game(update=update, context=context)
+        print(name)
+        return conversation_states["entry"]
+    
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Hi @{name}!\n" + messages['welcome'],
                              reply_markup=keyboards['play'])
     return conversation_states['lobby']
@@ -442,6 +462,7 @@ def join(update: Update, context: CallbackContext) -> int or None:
     want2play = update.message.from_user.id
     context.chat_data['players'].add(want2play)
     name = get_users_name_from_id(update, context, want2play)
+    #TODO: Only if they are the admon
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=f"Hi @{name}!",
                              reply_markup=keyboards['play'])
@@ -461,13 +482,20 @@ def bot_was_added_to_group(update: Update, context: CallbackContext) -> int or N
             - return type == <class 'NoneType'> or int
             - len(new_chat_members) > 0
     """
-    new_chat_members = [x.id for x in update.message.new_chat_members]
-    if context.bot.get_me().id in new_chat_members:
-        lg.debug("Bot was added to group")
-        new_game(update, context)
-        return conversation_states['lobby']
-    else:
-        return None
+    sender = update.message.from_user.id
+    name = get_users_name_from_id(update, context, sender)
+    end_game(update=update, context=context, bot_leave_chat=False)
+    new_chat_members = [x.first_name for x in update.message.new_chat_members]
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Hi @{name}!\n" + messages['welcome'],
+                             reply_markup=keyboards['play'])
+    return conversation_states['lobby']
+
+    # if context.bot.first_name in new_chat_members:
+    #     lg.debug("Bot was added to group")
+    #     new_game(update, context)
+    #     return conversation_states['lobby']
+    # else:
+    #     return None
 
 
 def new_player(update: Update, context: CallbackContext) -> int:
@@ -483,10 +511,16 @@ def new_player(update: Update, context: CallbackContext) -> int:
             - if new_player != bot: check len(context.chat_data['players']) increased by 1
     """
 
+
+
+
     lg.debug("Somebody entered the group")
     want2play = {x.id for x in update.message.new_chat_members}
     lg.info(f"new member(s): {str(want2play)}")
-    context.chat_data['players'].update(want2play)
+    try:
+        context.chat_data['players'].update(want2play)
+    except:
+        new_game(update=update, context=context)
     try:
         context.chat_data['players'].remove(context.bot.get_me().id)
     except KeyError:
@@ -494,9 +528,13 @@ def new_player(update: Update, context: CallbackContext) -> int:
 
     for player in want2play:
         name = get_users_name_from_id(update, context, player)
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"Hi @{name}!",
-                                 reply_markup=keyboards['play'])
+        if name == context.bot.first_name:
+            bot_was_added_to_group(update=update, context=context)
+        else:
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                    text=f"Hi @{name}!",
+                                    reply_markup=keyboards['play'])
+            
     lg.info(f"Currently in the lobby:\n {str(get_current_players(update, context))}")
     return conversation_states['lobby']
 
@@ -516,6 +554,8 @@ def player_left_in_game(update:Update, context:CallbackContext):
     """
     #
     lg.debug("A player during the game left")
+
+
     player_left_in_lobby(update, context)
 
     if len(context.chat_data['players']) < 2:
@@ -523,6 +563,22 @@ def player_left_in_game(update:Update, context:CallbackContext):
                                  text="There are not enough registered players 😔")
         leave_chat(update, context)
 
+
+def bot_gets_removed_from_game(update: Update, context: CallbackContext) -> int or None :
+    """End the game if the bot gets removed from the game
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+
+        test:
+            - len(context.chat_data['players']) decreased by 1
+            - return type == int
+    """
+    lg.debug("Bot was removed")
+    left = update.message.left_chat_member.first_name
+    if left == update.message.bot.first_name:
+       end_game(update=update, context=context, bot_leave_chat=False)
+    
 
 def player_left_in_lobby(update: Update, context: CallbackContext) -> int or None :
     """remove player that left the group
@@ -538,6 +594,7 @@ def player_left_in_lobby(update: Update, context: CallbackContext) -> int or Non
     """
     lg.debug("A player left")
     left = update.message.left_chat_member.id
+
     try:
         players_before_leaving = get_current_players(update, context)
         context.chat_data['players'].remove(left)
@@ -548,6 +605,8 @@ def player_left_in_lobby(update: Update, context: CallbackContext) -> int or Non
         lg.info("a not registered chat member left the group")
     if context.chat_data['game'] == 0:
         return conversation_states['lobby']
+    elif update.message.left_chat_member.first_name == context.bot.first_name: end_game(update=update, context=context)
+    
     else:
         return None
 
@@ -885,7 +944,7 @@ def score(update: Update, context: CallbackContext):
 def send_hand(update: Update, context:CallbackContext):
     """Give player hands keyboard.
 
-    Give player hands keyboard. Is useful since the keyboards are are tied to messages from the bot.
+    Give player hands keyboard. Is useful since the keyboards are tied to messages from the bot.
     Meaning the serve as a reply blue print. However, if a player tries to respond to another message in the chat,
     it can be hard to find the bot's message that has the player's hands keyboard (reply blue print)
 
@@ -923,19 +982,24 @@ def send_hand(update: Update, context:CallbackContext):
 unknown_command_handler = MessageHandler(Filters.command, unknown_command)
 
 # source https://github.com/FrtZgwL/CoronaBot/blob/master/corona_bot.py
-entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
-               MessageHandler(Filters.status_update.new_chat_members, bot_was_added_to_group),
-               CommandHandler('newgame', new_game)]
+
 # states conversation can be in an available Message/CommandHandlers
 states = {
+    conversation_states["entry_point"] : [MessageHandler(Filters.status_update.chat_created, new_game),
+               MessageHandler(Filters.status_update.new_chat_members, bot_was_added_to_group),
+               MessageHandler(Filters.status_update.new_chat_members, bot_gets_removed_from_game),
+               MessageHandler(Filters.status_update.left_chat_member, player_left_in_lobby),
+               CommandHandler('newgame', new_game)],
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
                                    MessageHandler(Filters.status_update.left_chat_member, player_left_in_lobby),
+                                   MessageHandler(Filters.status_update.new_chat_members, bot_gets_removed_from_game),
                                    CommandHandler('play', start_game),
                                    CommandHandler('help', bot_help),
                                    CommandHandler('rules', rules),
                                    CommandHandler('ruleslong', rules_long),
                                    CommandHandler('join', join)],
     conversation_states['play']: [
+                                   MessageHandler(Filters.status_update.new_chat_members, bot_gets_removed_from_game),
                                     MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'),
                                                    play_card),
                                     MessageHandler(Filters.status_update.left_chat_member, player_left_in_game),
@@ -952,7 +1016,7 @@ states = {
         MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit)]
 }
 
-navigation = ConversationHandler(entry_point,
+navigation = ConversationHandler(states[conversation_states["entry_point"]],
                                  states,
                                  [],  # fallbacks
                                  persistent=False,
@@ -960,6 +1024,13 @@ navigation = ConversationHandler(entry_point,
                                  per_user=False)
 # -- End: Handlers -- #
 
+
+
+updater = None 
+
+def restart_polling():
+    updater.dispatcher.stop_polling()  # Stop polling
+    updater.dispatcher.start_polling()  # Restart polling
 
 def main():
     """main function
@@ -969,7 +1040,12 @@ def main():
             - updater != None
             - dispatcher != None
     """
-    updater = Updater(token=BOT_TOKEN, use_context=True)
+    # chatgpt debugging
+    REQUEST_KWARGS = {
+    'read_timeout': 10,  # Increase read timeout to 10 seconds
+    'connect_timeout': 10,  # Increase connect timeout to 10 seconds
+    }
+    updater = Updater(token=BOT_TOKEN, use_context=True, request_kwargs=REQUEST_KWARGS)
     dispatcher = updater.dispatcher
 
     # add handlers
@@ -979,7 +1055,6 @@ def main():
 
     # start looking for chat updates
     updater.start_polling()
-
 
 
 

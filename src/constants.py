@@ -22,7 +22,26 @@ suits = "♠♥♣♦"
 
 hand_filler = "."
 # Testing ---
-TEST_B0T_TOKEN = "1796005782:AAH50veupoTsA4KbrKv9A7ZndiO0CCewa9g"
+
+BOT_INFOS = {
+    "testbot1": {
+    "username":"crazy8sbot_test_1_bot",
+    "url":"t.me/crazy8sbot_test_1_bot",
+    "token":"7080340123:AAFwg8ZOegQMcajR86DtNlUdImBPsPe8CZc",
+    },
+    "username":"crazy8sbot_test_2_bot",
+     "testbot2": {
+        "url": "t.me/crazy8sbot_test_2_bot",
+        "token": "7146187585:AAFymjKctgODOoJHi_T7AWThwoxeVY6SQdM",
+    },
+    "crazy8sbot": {
+        "url": "t.me/ct.me/crazy8sbot",
+        "token": "6557288322:AAH5BrPdh5JTrivZmF6Yyx4rKIkh3Muo1nQ",
+    }   
+}
+
+TEST_B0T_TOKEN = BOT_INFOS["crazy8sbot"]["token"] #"1796005782:AAH50veupoTsA4KbrKv9A7ZndiO0CCewa9g"
+
 
 # Bot constants
 
@@ -51,7 +70,8 @@ keyboards = {
 conversation_states = {
     'lobby': 0,
     'play': 1,
-    'choose_suit': 2
+    'choose_suit': 2,
+    'entry_point':3
 }
 
 messages = {
@@ -100,3 +120,5 @@ messages = {
                 "of the card stack\n/join: join game before pressing play\n/help: list of available commands\n/hand: gives you your current hand keyboard",
     'wrong_turn': "I'm sorry but it's not your turn 😕"
 }
+
+
