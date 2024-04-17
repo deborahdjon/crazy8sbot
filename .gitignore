@@ -14,5 +14,5 @@ protokoll*
 .gitignore
 craz8env/
 src/bot_infos.json
-
+bot_infos.json
 
